@@ -12,17 +12,25 @@ const votingAddress = new PublicKey("coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF
 
 describe('votingapp', () => {
   // Configure the client to use the local cluster.
- 
+  let context
+  let provider
+  let votingProgram
 
-  it ('Initialize Poll', async() => {
-    const context = await startAnchor("", [{ name : "votingapp", programId: votingAddress}], []);
+  beforeAll(async() => {
+    context = await startAnchor("", [{ name : "votingapp", programId: votingAddress}], []);
 
-    const provider = new BankrunProvider(context);
+    provider = new BankrunProvider(context);
 
-    const votingProgram = new Program<Votingapp>(
+    votingProgram = new Program<Votingapp>(
       IDL,
       provider
   )
+
+  })
+ 
+
+  it ('Initialize Poll', async() => {
+ 
 
   await votingProgram.methods.initializePoll(
     new anchor.BN(1),
@@ -43,5 +51,61 @@ describe('votingapp', () => {
   expect(poll.description).toEqual("who is your favorite solana candidate")
   expect(poll.pollStart.toNumber()).toBeLessThan(poll.pollEnd.toNumber())
 
+  })
+
+  it ('Initialize Candidate', async () => {
+    await votingProgram.methods.initializeCandidate(
+      "Jack",
+      new anchor.BN(1)
+    ).rpc()
+
+    await votingProgram.methods.initializeCandidate(
+      "Josh",
+      new anchor.BN(1)
+    ).rpc()
+
+    const [JackAddress] = PublicKey.findProgramAddressSync(
+      [new anchor.BN(1).toArrayLike(Buffer, 'le', 8), Buffer.from("Jack")],
+      votingAddress,
+    )
+  
+    const candidateOne = await votingProgram.account.candidate.fetch(JackAddress)
+    console.log(candidateOne) 
+    expect(candidateOne.candidateVotes.toNumber()).toEqual(0);
+    
+    const [JoshAddress] = PublicKey.findProgramAddressSync(
+      [new anchor.BN(1).toArrayLike(Buffer, 'le', 8), Buffer.from("Josh")],
+      votingAddress,
+    )
+  
+    const candidateTwo = await votingProgram.account.candidate.fetch(JoshAddress)
+    console.log(candidateTwo)
+    expect(candidateTwo.candidateVotes.toNumber()).toEqual(0);
+  })
+  
+
+  it ('vote', async () => {
+    await votingProgram.methods.vote(
+      "Jack",
+      new anchor.BN(1),
+    ).rpc()
+
+    const [JackAddress] = PublicKey.findProgramAddressSync(
+      [new anchor.BN(1).toArrayLike(Buffer, 'le', 8), Buffer.from("Jack")],
+      votingAddress,
+    )
+  
+    const candidateOne = await votingProgram.account.candidate.fetch(JackAddress)
+    console.log(candidateOne) 
+    expect(candidateOne.candidateVotes.toNumber()).toEqual(1);
+    
+    // const [JoshAddress] = PublicKey.findProgramAddressSync(
+    //   [new anchor.BN(1).toArrayLike(Buffer, 'le', 8), Buffer.from("Josh")],
+    //   votingAddress,
+    // )
+  
+    // const candidateTwo = await votingProgram.account.candidate.fetch(JoshAddress)
+    // console.log(candidateTwo)
+    // expect(candidateTwo.candidateVotes.toNumber()).toEqual(0);
   })
 })
