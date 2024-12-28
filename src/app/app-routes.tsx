@@ -7,6 +7,7 @@ const AccountDetailFeature = lazy(() => import('../components/account/account-de
 const ClusterFeature = lazy(() => import('../components/cluster/cluster-feature'))
 const VotingappFeature = lazy(() => import('../components/votingapp/votingapp-feature'))
 const DashboardFeature = lazy(() => import('../components/dashboard/dashboard-feature'))
+// const VoteApi = lazy(() => import('../components/api/vote/route'))
 
 const links: { label: string; path: string }[] = [
   { label: 'Account', path: '/account' },
@@ -19,6 +20,7 @@ const routes: RouteObject[] = [
   { path: '/account/:address', element: <AccountDetailFeature /> },
   { path: '/votingapp', element: <VotingappFeature /> },
   { path: '/clusters', element: <ClusterFeature /> },
+  // { path: '/api/vote', element:<VoteApi /> }
 ]
 
 export function AppRoutes() {
